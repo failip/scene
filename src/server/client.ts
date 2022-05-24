@@ -20,7 +20,7 @@ export class Client {
     }
 
     onMessage(data) {
-        this.room.updateRoom("This is an update");
+        this.room.updateRoom(JSON.parse(data.toString()));
     }
 
     sendMessage(data) {
