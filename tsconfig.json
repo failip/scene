@@ -1,0 +1,7 @@
+{
+"CompilerOptions": {
+        "target": "es6",
+            "moduleResolution": "node",
+                "types": ["@types/ws"]
+                  }
+                  }
