@@ -2,10 +2,7 @@ import { Client } from './client';
 import { Object } from './object';
 
 export class RoomUpdate {
-    tag: string;
-    x: number;
-    y: number;
-    z: number;
+    constructor(public tag: string, public x: number, public y: number, public z: number) {}
 }
 
 export class Room {

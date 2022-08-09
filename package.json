@@ -1,23 +1,24 @@
 {
-  "name": "sceneserver",
-  "version": "0.0.1",
-  "description": "Serve a 3D scene to multiple clients",
-  "main": "src/index.js",
-  "author": "Philipp Kuboth",
-  "license": "CC-BY-NC-ND-3.0",
-  "dependencies": {
-    "@types/ws": "^8.5.3",
-    "esbuild": "^0.14.39",
-    "express": "^4.18.1",
-    "gl-matrix": "^3.4.3",
-    "nodemon": "^2.0.16",
-    "typescript": "^4.6.4",
-    "ws": "^8.6.0"
-  },
-  "scripts": {
-    "start": "node build/server.js",
-    "build_server": "esbuild  src/server/index.ts --bundle --platform=node --minify --outfile=build/server.js",
-    "build_and_run_server": "npm run build_server && npm run start",
-    "watch": "nodemon -e ts --exec 'npm run build_and_run_server'"
-  }
+    "name": "sceneserver",
+    "version": "0.0.1",
+    "description": "Serve a 3D scene to multiple clients",
+    "author": "Philipp Kuboth",
+    "license": "CC-BY-NC-ND-3.0",
+    "dependencies": {
+        "@types/ws": "^8.5.3",
+        "esbuild": "^0.14.39",
+        "express": "^4.18.1",
+        "gl-matrix": "^3.4.3",
+        "nodemon": "^2.0.16",
+        "three": "^0.143.0",
+        "typescript": "^4.6.4",
+        "ws": "^8.6.0"
+    },
+    "scripts": {
+        "start": "node build/server.js",
+        "build_server": "esbuild  src/server/server.ts --bundle --platform=node --minify --outfile=build/server.js",
+        "build_client": "esbuild  src/client/client.ts --bundle --platform=node --minify --outfile=build/client.js",
+        "build_and_run_server": "npm run build_server && npm run start",
+        "watch": "nodemon --config nodemon_client.json & nodemon --config nodemon_server.json"
+    }
 }
