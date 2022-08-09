@@ -1,5 +1,6 @@
 import { WebSocket } from 'ws';
-import { Room, RoomUpdate } from './room';
+import { Room } from './room';
+import { RoomUpdate } from './updates';
 
 export class Client {
     role: string;

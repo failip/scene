@@ -1,9 +1,6 @@
 import { Client } from './client';
 import { Object } from './object';
-
-export class RoomUpdate {
-    constructor(public tag: string, public x: number, public y: number, public z: number) {}
-}
+import { PositionUpdate, RoomUpdate, RotationUpdate } from './updates';
 
 export class Room {
     clients: Client[];
@@ -24,10 +21,24 @@ export class Room {
     }
 
     updateRoom(update: RoomUpdate) {
-        console.log(update);
-        this.objects[update.tag].translation[0] = update.x;
-        this.objects[update.tag].translation[1] = update.y;
-        this.objects[update.tag].translation[2] = update.z;
+        if (update.update_type == 'Position') {
+            this.updatePosition(update as PositionUpdate);
+        } else if (update.update_type == 'Rotation') {
+            this.updateRotation(update as RotationUpdate);
+        }
+    }
+
+    updatePosition(update: PositionUpdate) {
+        console.log(update.translation);
+        this.objects[update.object_id].translation = update.translation;
+        for (const client_index in this.clients) {
+            this.clients[client_index].sendMessage(JSON.stringify(this.objects));
+        }
+    }
+
+    updateRotation(update: RotationUpdate) {
+        console.log(update.rotation);
+        this.objects[update.object_id].rotation = update.rotation;
         for (const client_index in this.clients) {
             this.clients[client_index].sendMessage(JSON.stringify(this.objects));
         }
