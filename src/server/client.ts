@@ -1,5 +1,5 @@
 import { WebSocket } from 'ws';
-import { Room } from './room';
+import { Room, RoomUpdate } from './room';
 
 export class Client {
     role: string;
@@ -20,7 +20,7 @@ export class Client {
     }
 
     onMessage(data) {
-        this.room.updateRoom(JSON.parse(data.toString()));
+        this.room.updateRoom(JSON.parse(data.toString()) as RoomUpdate);
     }
 
     sendMessage(data) {
