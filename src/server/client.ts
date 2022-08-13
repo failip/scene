@@ -15,6 +15,7 @@ export class Client {
         this.connection = connection;
         this.id = id;
         this.room = room;
+        connection.send(id);
         connection.on('message', (data) => {
             this.onMessage(data);
         });

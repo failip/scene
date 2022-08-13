@@ -21,7 +21,10 @@ export class Room {
     addClient(client: Client) {
         console.log('New Client connected with ID ' + client.id.toString());
         this.clients[client.id.toString()] = client;
-        client.sendMessage(JSON.stringify(this.objects));
+        for (const object in this.objects) {
+            const update = new PositionUpdate(object, 'Server', this.objects[object].translation);
+            client.sendMessage(JSON.stringify(update));
+        }
     }
 
     removeClient(client: Client) {
@@ -40,16 +43,19 @@ export class Room {
     updatePosition(update: PositionUpdate) {
         console.log(update.translation);
         this.objects[update.object_id].translation = update.translation;
-        for (const client_index in this.clients) {
-            this.clients[client_index].sendMessage(JSON.stringify(this.objects));
+        for (const client in this.clients) {
+            if (client == update.update_from) {
+                continue;
+            }
+            this.clients[client].sendMessage(JSON.stringify(update));
         }
     }
 
     updateRotation(update: RotationUpdate) {
         console.log(update.rotation);
         this.objects[update.object_id].rotation = update.rotation;
-        for (const client_index in this.clients) {
-            this.clients[client_index].sendMessage(JSON.stringify(this.objects));
+        for (const client in this.clients) {
+            this.clients[client].sendMessage(JSON.stringify(update));
         }
     }
 }

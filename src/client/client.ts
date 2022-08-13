@@ -29,7 +29,7 @@ document.body.appendChild(renderer.domElement);
 
 const geometry = new BoxGeometry();
 const material = new MeshPhongMaterial({ color: 0x00ff00 });
-const cube = new Mesh(geometry, material);
+const cube: Mesh = new Mesh(geometry, material);
 cube.name = 'Cube';
 scene.add(cube);
 scene.add(transform_controls);
@@ -38,19 +38,31 @@ scene.add(light);
 scene.add(ambient_light);
 camera.position.z = 5;
 
+var id: string;
+
 transform_controls.addEventListener('objectChange', (event) => {
-    const position_update = new PositionUpdate('Cube', cube.position);
+    const position_update = new PositionUpdate('Cube', id, cube.position.toArray());
     websocket.send(JSON.stringify(position_update));
 });
 
 const websocket = new WebSocket('ws://127.0.0.1:44433');
+
 websocket.onmessage = (message) => {
-    let update = JSON.parse(message.data.toString()) as RoomUpdate;
-    if ((update.update_type = 'Position')) {
-        const position_update = update as PositionUpdate;
-        cube.position = position_update.translation;
-    }
+    id = message.data.toString();
+    websocket.onmessage = (message) => {
+        let update = JSON.parse(message.data.toString()) as RoomUpdate;
+        if ((update.update_type = 'Position')) {
+            console.log(update);
+            const position_update = update as PositionUpdate;
+            cube.position.set(
+                position_update.translation[0],
+                position_update.translation[1],
+                position_update.translation[2]
+            );
+        }
+    };
 };
+
 function animate() {
     requestAnimationFrame(animate);
     renderer.render(scene, camera);
@@ -61,7 +73,6 @@ window.addEventListener('resize', onWindowResize, false);
 function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
-
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
