@@ -94,9 +94,6 @@ function createNewObject() {
     scene.add(cube);
     scene.add(transform_controls);
     transform_controls.attach(cube);
-    const object = new Object('Cube');
-    const update = new ObjectUpdate('Cube', id, object);
-    websocket.send(JSON.stringify(update));
     return cube;
 }
 
@@ -107,6 +104,9 @@ document.addEventListener(
         var code = event.code;
         if (code == 'KeyA') {
             createNewObject();
+            const object = new Object('Cube');
+            const update = new ObjectUpdate('Cube', id, object);
+            websocket.send(JSON.stringify(update));
         }
     },
     false
