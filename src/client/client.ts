@@ -24,8 +24,6 @@ const light = new DirectionalLight(0xffffff, 1.0);
 const ambient_light = new AmbientLight(0xffffff, 0.2);
 light.position.set(5, 5, 5);
 
-var focused_object;
-
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
@@ -56,6 +54,15 @@ websocket.onmessage = (message) => {
 function animate() {
     requestAnimationFrame(animate);
     renderer.render(scene, camera);
+}
+
+window.addEventListener('resize', onWindowResize, false);
+
+function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
 animate();
