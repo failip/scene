@@ -1,4 +1,4 @@
-import { WebSocket } from 'ws';
+import { RawData, WebSocket } from 'ws';
 import { Room } from './room';
 import { RoomUpdate } from './updates';
 
@@ -18,13 +18,20 @@ export class Client {
         connection.on('message', (data) => {
             this.onMessage(data);
         });
+        connection.on('close', (data) => {
+            this.onConnectionClosed();
+        });
     }
 
-    onMessage(data) {
+    onConnectionClosed() {
+        this.room.removeClient(this);
+    }
+
+    onMessage(data: RawData) {
         this.room.updateRoom(JSON.parse(data.toString()) as RoomUpdate);
     }
 
-    sendMessage(data) {
+    sendMessage(data: string) {
         this.connection.send(data);
     }
 }

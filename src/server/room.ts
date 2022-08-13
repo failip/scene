@@ -3,21 +3,30 @@ import { Object } from './object';
 import { PositionUpdate, RoomUpdate, RotationUpdate } from './updates';
 
 export class Room {
-    clients: Client[];
+    clients: Map<string, Client>;
     objects: Map<string, Object>;
 
     constructor() {
-        this.clients = [];
+        this.clients = new Map();
         this.objects = new Map();
         let cube = new Object('Cube');
-        this.objects['Cube'] = cube;
+        this.addObject(cube);
         console.log(cube.getJSONRepresentation());
     }
 
+    addObject(object: Object) {
+        this.objects[object.id] = object;
+    }
+
     addClient(client: Client) {
-        console.log('New Client connected.');
-        this.clients.push(client);
+        console.log('New Client connected with ID ' + client.id.toString());
+        this.clients[client.id.toString()] = client;
         client.sendMessage(JSON.stringify(this.objects));
+    }
+
+    removeClient(client: Client) {
+        console.log('Client disconnected with ID ' + client.id.toString());
+        this.clients.delete(client.id.toString());
     }
 
     updateRoom(update: RoomUpdate) {

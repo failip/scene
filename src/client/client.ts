@@ -13,7 +13,7 @@ import {
     AmbientLight
 } from 'three';
 import { TransformControls } from '../../node_modules/three/examples/jsm/controls/TransformControls.js';
-import { PositionUpdate } from '../server/updates.js';
+import { PositionUpdate, RoomUpdate } from '../server/updates.js';
 
 const scene = new Scene();
 const camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -48,7 +48,10 @@ transform_controls.addEventListener('objectChange', (event) => {
 const websocket = new WebSocket('ws://127.0.0.1:44433');
 websocket.onmessage = (message) => {
     let update = JSON.parse(message.data.toString()) as RoomUpdate;
-    cube.position = update.translation;
+    if ((update.update_type = 'Position')) {
+        const position_update = update as PositionUpdate;
+        cube.position = position_update.translation;
+    }
 };
 function animate() {
     requestAnimationFrame(animate);
