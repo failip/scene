@@ -16,13 +16,16 @@ export class Room {
         this.scene.setOnHandlePositionUpadteCallback((position_update: PositionUpdate) => {
             this.relayUpdate(position_update);
         });
+        this.scene.setOnHandleRoationUpdateCallback((rotation_update: RotationUpdate) => {
+            this.relayUpdate(rotation_update);
+        });
     }
 
     addClient(client: Client) {
         console.log('New Client connected with ID ' + client.id.toString());
         this.clients.set(client.id.toString(), client);
-        this.scene.objects.forEach((value: Object, key: string) => {
-            const update = new ObjectUpdate(key, 'Server', value);
+        this.scene.objects.forEach((object: Object, object_id: string) => {
+            const update = new ObjectUpdate(object_id, 'Server', object);
             client.sendMessage(JSON.stringify(update));
         });
     }
@@ -39,25 +42,6 @@ export class Room {
             this.scene.handleRotationUpdate(update as RotationUpdate);
         } else if (update.update_type == 'Object') {
             this.scene.handleObjectUpdate(update as ObjectUpdate);
-        }
-    }
-
-    updatePosition(update: PositionUpdate) {
-        console.log(update);
-
-        for (const client in this.clients) {
-            if (client == update.update_from) {
-                continue;
-            }
-            this.clients[client].sendMessage(JSON.stringify(update));
-        }
-    }
-
-    updateRotation(update: RotationUpdate) {
-        console.log(update);
-        this.scene.objects[update.object_id].rotation = update.rotation;
-        for (const client in this.clients) {
-            this.clients[client].sendMessage(JSON.stringify(update));
         }
     }
 

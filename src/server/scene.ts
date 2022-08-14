@@ -8,6 +8,7 @@ export class Scene {
     private onRemoveObjectCallback: (object: Object) => void;
     private onHandleObjectUpdateCallback: (object_update: ObjectUpdate) => void;
     private onHandlePositionUpdateCallback: (position_update: PositionUpdate) => void;
+    private onHandleRotationUpdateCallback: (roation_update: RotationUpdate) => void;
 
     constructor() {
         this.objects = new Map();
@@ -57,7 +58,14 @@ export class Scene {
         }
     }
 
-    handleRotationUpdate(rotation_update: RotationUpdate) {}
+    handleRotationUpdate(rotation_update: RotationUpdate) {
+        if (this.isObjectInScene(rotation_update.object_id)) {
+            this.objects.get(rotation_update.object_id).rotation = rotation_update.rotation;
+            if (this.onHandleRotationUpdateCallback) {
+                this.onHandleRotationUpdateCallback(rotation_update);
+            }
+        }
+    }
 
     setOnHandleObjectUpdateCallback(callback: (object_update: ObjectUpdate) => void): void {
         this.onHandleObjectUpdateCallback = callback;
@@ -73,5 +81,9 @@ export class Scene {
 
     setOnHandlePositionUpadteCallback(callback: (position_update: PositionUpdate) => void): void {
         this.onHandlePositionUpdateCallback = callback;
+    }
+
+    setOnHandleRoationUpdateCallback(callback: (rotation_update: RotationUpdate) => void): void {
+        this.onHandleRotationUpdateCallback = callback;
     }
 }
