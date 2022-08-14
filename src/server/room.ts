@@ -13,15 +13,18 @@ export class Room {
         this.scene.setOnHandleObjectUpdateCallback((object_update: ObjectUpdate) => {
             this.relayUpdate(object_update);
         });
+        this.scene.setOnHandlePositionUpadteCallback((position_update: PositionUpdate) => {
+            this.relayUpdate(position_update);
+        });
     }
 
     addClient(client: Client) {
         console.log('New Client connected with ID ' + client.id.toString());
-        this.clients[client.id.toString()] = client;
-        for (const object in this.scene.objects) {
-            const update = new ObjectUpdate(object, 'Server', this.scene.objects[object]);
+        this.clients.set(client.id.toString(), client);
+        this.scene.objects.forEach((value: Object, key: string) => {
+            const update = new ObjectUpdate(key, 'Server', value);
             client.sendMessage(JSON.stringify(update));
-        }
+        });
     }
 
     removeClient(client: Client) {
@@ -31,9 +34,9 @@ export class Room {
 
     updateRoom(update: RoomUpdate) {
         if (update.update_type == 'Position') {
-            this.updatePosition(update as PositionUpdate);
+            this.scene.handlePositionUpdate(update as PositionUpdate);
         } else if (update.update_type == 'Rotation') {
-            this.updateRotation(update as RotationUpdate);
+            this.scene.handleRotationUpdate(update as RotationUpdate);
         } else if (update.update_type == 'Object') {
             this.scene.handleObjectUpdate(update as ObjectUpdate);
         }
@@ -41,7 +44,7 @@ export class Room {
 
     updatePosition(update: PositionUpdate) {
         console.log(update);
-        this.scene.objects[update.object_id].translation = update.translation;
+
         for (const client in this.clients) {
             if (client == update.update_from) {
                 continue;
@@ -59,17 +62,11 @@ export class Room {
     }
 
     relayUpdate(update: RoomUpdate) {
-        console.log('Relaying update');
-        console.log(this.clients);
-
-        for (const client in this.clients) {
-            console.log('Sending to client ' + client);
-            if (client == update.update_from) {
-                continue;
+        console.log(update);
+        this.clients.forEach((client: Client, client_id: string) => {
+            if (client_id != update.update_from) {
+                client.sendMessage(JSON.stringify(update));
             }
-            console.log('Sending to client ' + client);
-
-            this.clients[client].sendMessage(JSON.stringify(update));
-        }
+        });
     }
 }

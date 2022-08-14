@@ -1,5 +1,5 @@
 import { Object } from './object';
-import { ObjectUpdate } from './updates';
+import { ObjectUpdate, PositionUpdate, RotationUpdate } from './updates';
 
 export class Scene {
     objects: Map<string, Object>;
@@ -7,14 +7,15 @@ export class Scene {
     private onAddObjectCallback: (object: Object) => void;
     private onRemoveObjectCallback: (object: Object) => void;
     private onHandleObjectUpdateCallback: (object_update: ObjectUpdate) => void;
+    private onHandlePositionUpdateCallback: (position_update: PositionUpdate) => void;
 
     constructor() {
         this.objects = new Map();
     }
 
     addObject(object: Object): void {
-        if (!this.isObjectInScene(object)) {
-            this.objects[object.id] = object;
+        if (!this.isObjectInScene(object.id)) {
+            this.objects.set(object.id, object);
             if (this.onAddObjectCallback) {
                 this.onAddObjectCallback(object);
             }
@@ -22,7 +23,7 @@ export class Scene {
     }
 
     removeObject(object: Object): void {
-        if (this.isObjectInScene(object)) {
+        if (this.isObjectInScene(object.id)) {
             this.objects.delete(object.id);
             if (this.onRemoveObjectCallback) {
                 this.onRemoveObjectCallback(object);
@@ -30,30 +31,47 @@ export class Scene {
         }
     }
 
-    isObjectInScene(object: Object): boolean {
-        return this.objects.has(object.id);
+    isObjectInScene(object_id: string): boolean {
+        return this.objects.has(object_id);
     }
 
-    handleObjectUpdate(object_update: ObjectUpdate) {
-        if (!this.isObjectInScene(object_update.object)) {
-            this.objects[object_update.object_id] = object_update.object;
+    handleObjectUpdate(object_update: ObjectUpdate): void {
+        console.log(object_update);
+
+        if (!this.isObjectInScene(object_update.object_id)) {
+            this.objects.set(object_update.object_id, object_update.object);
             if (this.onHandleObjectUpdateCallback) {
-                console.log('Handling callback update');
-                console.log(object_update);
+                console.log('Relaying handle object');
+
                 this.onHandleObjectUpdateCallback(object_update);
             }
         }
     }
 
-    setOnHandleObjectUpdateCallback(callback: (object_update: ObjectUpdate) => void) {
+    handlePositionUpdate(position_update: PositionUpdate) {
+        if (this.isObjectInScene(position_update.object_id)) {
+            this.objects.get(position_update.object_id).translation = position_update.translation;
+            if (this.onHandlePositionUpdateCallback) {
+                this.onHandlePositionUpdateCallback(position_update);
+            }
+        }
+    }
+
+    handleRotationUpdate(rotation_update: RotationUpdate) {}
+
+    setOnHandleObjectUpdateCallback(callback: (object_update: ObjectUpdate) => void): void {
         this.onHandleObjectUpdateCallback = callback;
     }
 
-    setOnAddObjectCallback(callback: (object: Object) => void) {
+    setOnAddObjectCallback(callback: (object: Object) => void): void {
         this.onAddObjectCallback = callback;
     }
 
-    setOnRemoveObjectCallback(callback: (object: Object) => void) {
+    setOnRemoveObjectCallback(callback: (object: Object) => void): void {
         this.onRemoveObjectCallback = callback;
+    }
+
+    setOnHandlePositionUpadteCallback(callback: (position_update: PositionUpdate) => void): void {
+        this.onHandlePositionUpdateCallback = callback;
     }
 }
