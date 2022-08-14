@@ -1,28 +1,21 @@
 import {
     WebGLRenderer,
     Raycaster,
-    Vector2,
-    MeshBasicMaterial,
     MeshPhongMaterial,
     Mesh,
     BoxGeometry,
     PerspectiveCamera,
     Scene,
     DirectionalLight,
-    Vector3,
     AmbientLight
 } from 'three';
 import { TransformControls } from '../../node_modules/three/examples/jsm/controls/TransformControls.js';
-import {
-    NewObjectUpdate,
-    ObjectUpdate,
-    PositionUpdate,
-    RoomUpdate,
-    RotationUpdate
-} from '../server/updates.js';
+import { ObjectUpdate, PositionUpdate, RoomUpdate, RotationUpdate } from '../server/updates.js';
 import { Object } from '../server/object';
+import * as ControlScene from '../server/scene.js';
 
 const scene = new Scene();
+const control_scene = new ControlScene.Scene();
 const camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 const renderer = new WebGLRenderer();
 const raycaster = new Raycaster();
@@ -31,6 +24,8 @@ const light = new DirectionalLight(0xffffff, 1.0);
 const ambient_light = new AmbientLight(0xffffff, 0.2);
 light.position.set(5, 5, 5);
 
+const objects: Map<string, Mesh> = new Map();
+scene.add(transform_controls);
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 var cube: Mesh;
@@ -52,8 +47,8 @@ websocket.onmessage = (message) => {
     id = message.data.toString();
     websocket.onmessage = (message) => {
         let update = JSON.parse(message.data.toString()) as RoomUpdate;
+        console.log(update);
         if (update.update_type == 'Position') {
-            console.log(update);
             const position_update = update as PositionUpdate;
             cube.position.set(
                 position_update.translation[0],
@@ -63,13 +58,7 @@ websocket.onmessage = (message) => {
         }
 
         if (update.update_type == 'Object') {
-            const object_update = update as ObjectUpdate;
-            const new_object = createNewObject(object_update.object_id);
-            new_object.position.set(
-                object_update.object.translation[0],
-                object_update.object.translation[1],
-                object_update.object.translation[2]
-            );
+            control_scene.handleObjectUpdate(update as ObjectUpdate);
         }
     };
 };
@@ -87,17 +76,38 @@ function onWindowResize() {
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-function createNewObject(name: string) {
+function addNewObject(object: Object) {
     const geometry = new BoxGeometry();
     const material = new MeshPhongMaterial({ color: 0x00ff00 });
     cube = new Mesh(geometry, material);
-    cube.name = name;
+    cube.name = object.id;
     scene.add(cube);
-    scene.add(transform_controls);
     transform_controls.attach(cube);
     focused_object = cube;
     return cube;
 }
+
+control_scene.setOnAddObjectCallback((object: Object) => {
+    const update = new ObjectUpdate(object.id, id, object);
+    websocket.send(JSON.stringify(update));
+    const new_scene_object = addNewObject(object);
+    objects.set(object.id, new_scene_object);
+    new_scene_object.position.set(
+        object.translation[0],
+        object.translation[1],
+        object.translation[2]
+    );
+});
+
+control_scene.setOnHandleObjectUpdateCallback((object_update: ObjectUpdate) => {
+    const new_scene_object = addNewObject(object_update.object);
+    objects.set(object_update.object_id, new_scene_object);
+    new_scene_object.position.set(
+        object_update.object.translation[0],
+        object_update.object.translation[1],
+        object_update.object.translation[2]
+    );
+});
 
 document.addEventListener(
     'keydown',
@@ -105,10 +115,8 @@ document.addEventListener(
         var name = event.key;
         var code = event.code;
         if (code == 'KeyA') {
-            const new_object = createNewObject('Cube' + Date.now().toString());
-            const object = new Object(new_object.name);
-            const update = new ObjectUpdate(new_object.name, id, object);
-            websocket.send(JSON.stringify(update));
+            const object = new Object('Cube' + Date.now().toString());
+            control_scene.addObject(object);
         }
     },
     false
