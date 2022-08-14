@@ -39,9 +39,10 @@ scene.add(ambient_light);
 camera.position.z = 5;
 
 var id: string;
+var focused_object: Mesh;
 
 transform_controls.addEventListener('objectChange', (event) => {
-    const position_update = new PositionUpdate('Cube', id, cube.position.toArray());
+    const position_update = new PositionUpdate(focused_object.name, id, cube.position.toArray());
     websocket.send(JSON.stringify(position_update));
 });
 
@@ -63,7 +64,7 @@ websocket.onmessage = (message) => {
 
         if (update.update_type == 'Object') {
             const object_update = update as ObjectUpdate;
-            const new_object = createNewObject();
+            const new_object = createNewObject(object_update.object_id);
             new_object.position.set(
                 object_update.object.translation[0],
                 object_update.object.translation[1],
@@ -86,14 +87,15 @@ function onWindowResize() {
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-function createNewObject() {
+function createNewObject(name: string) {
     const geometry = new BoxGeometry();
     const material = new MeshPhongMaterial({ color: 0x00ff00 });
     cube = new Mesh(geometry, material);
-    cube.name = 'Cube';
+    cube.name = name;
     scene.add(cube);
     scene.add(transform_controls);
     transform_controls.attach(cube);
+    focused_object = cube;
     return cube;
 }
 
@@ -103,9 +105,9 @@ document.addEventListener(
         var name = event.key;
         var code = event.code;
         if (code == 'KeyA') {
-            createNewObject();
-            const object = new Object('Cube');
-            const update = new ObjectUpdate('Cube', id, object);
+            const new_object = createNewObject('Cube' + Date.now().toString());
+            const object = new Object(new_object.name);
+            const update = new ObjectUpdate(new_object.name, id, object);
             websocket.send(JSON.stringify(update));
         }
     },
