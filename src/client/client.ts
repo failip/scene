@@ -7,7 +7,8 @@ import {
     PerspectiveCamera,
     Scene,
     DirectionalLight,
-    AmbientLight
+    AmbientLight,
+    Vector2
 } from 'three';
 import { TransformControls } from '../../node_modules/three/examples/jsm/controls/TransformControls.js';
 import { ObjectUpdate, PositionUpdate, RoomUpdate, RotationUpdate } from '../server/updates.js';
@@ -18,7 +19,6 @@ const scene = new Scene();
 const control_scene = new ControlScene.Scene();
 const camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 const renderer = new WebGLRenderer();
-const raycaster = new Raycaster();
 const transform_controls = new TransformControls(camera, renderer.domElement);
 const light = new DirectionalLight(0xffffff, 1.0);
 const ambient_light = new AmbientLight(0xffffff, 0.2);
@@ -37,7 +37,13 @@ var id: string;
 var focused_object: Mesh;
 
 transform_controls.addEventListener('objectChange', (event) => {
-    const position_update = new PositionUpdate(focused_object.name, id, cube.position.toArray());
+    console.log(focused_object.name);
+
+    const position_update = new PositionUpdate(
+        focused_object.name,
+        id,
+        focused_object.position.toArray()
+    );
     websocket.send(JSON.stringify(position_update));
 });
 
@@ -50,11 +56,13 @@ websocket.onmessage = (message) => {
         console.log(update);
         if (update.update_type == 'Position') {
             const position_update = update as PositionUpdate;
-            cube.position.set(
-                position_update.translation[0],
-                position_update.translation[1],
-                position_update.translation[2]
-            );
+            objects
+                .get(update.object_id)
+                .position.set(
+                    position_update.translation[0],
+                    position_update.translation[1],
+                    position_update.translation[2]
+                );
         }
 
         if (update.update_type == 'Object') {
@@ -123,3 +131,34 @@ document.addEventListener(
 );
 
 animate();
+
+var raycaster = new Raycaster();
+var mouse = new Vector2();
+
+document.onmousedown = onDocumentMouseDown;
+
+function onDocumentMouseDown(event) {
+    event.preventDefault();
+
+    mouse.x = event.clientX / renderer.domElement.clientWidth * 2 - 1;
+    mouse.y = -(event.clientY / renderer.domElement.clientHeight) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+
+    const objects_to_check = Array.from(objects.values());
+
+    var intersects = raycaster.intersectObjects(objects_to_check);
+
+    if (intersects.length > 0) {
+        for (const intersect in intersects) {
+            const object = intersects[intersect].object as Mesh;
+            if (focused_object.name != object.name) {
+                console.log(focused_object);
+                console.log(object);
+
+                focused_object = object;
+                transform_controls.attach(focused_object);
+            }
+        }
+    }
+}
