@@ -42,8 +42,6 @@ export class Scene {
         if (!this.isObjectInScene(object_update.object_id)) {
             this.objects.set(object_update.object_id, object_update.object);
             if (this.onHandleObjectUpdateCallback) {
-                console.log('Relaying handle object');
-
                 this.onHandleObjectUpdateCallback(object_update);
             }
         }
