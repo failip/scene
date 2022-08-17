@@ -1,4 +1,4 @@
-import { vec3 } from 'gl-matrix';
+import { quat, vec3 } from 'gl-matrix';
 import { Object } from './object';
 
 export interface RoomUpdate {
@@ -14,7 +14,7 @@ export class PositionUpdate implements RoomUpdate {
 
 export class RotationUpdate implements RoomUpdate {
     public update_type = 'Rotation';
-    constructor(public object_id: string, public update_from: string, public rotation: vec3) {}
+    constructor(public object_id: string, public update_from: string, public rotation: quat) {}
 }
 
 export class ObjectUpdate implements RoomUpdate {

@@ -14,6 +14,7 @@ import { TransformControls } from '../../node_modules/three/examples/jsm/control
 import { ObjectUpdate, PositionUpdate, RoomUpdate, RotationUpdate } from '../server/updates.js';
 import { Object } from '../server/object';
 import * as ControlScene from '../server/scene.js';
+import { quat, vec3 } from 'gl-matrix';
 
 const scene = new Scene();
 const control_scene = new ControlScene.Scene();
@@ -23,6 +24,20 @@ const transform_controls = new TransformControls(camera, renderer.domElement);
 const light = new DirectionalLight(0xffffff, 1.0);
 const ambient_light = new AmbientLight(0xffffff, 0.2);
 light.position.set(5, 5, 5);
+
+enum ControlMode {
+    Translate = 'translate',
+    Rotate = 'rotate',
+    Scale = 'scale'
+}
+
+function set_transform_control_mode(control_mode: ControlMode): void {
+    transform_controls.setMode(control_mode);
+}
+
+var current_control_mode: ControlMode = ControlMode.Translate;
+
+set_transform_control_mode(current_control_mode);
 
 const objects: Map<string, Mesh> = new Map();
 scene.add(transform_controls);
@@ -37,14 +52,24 @@ var id: string;
 var focused_object: Mesh;
 
 transform_controls.addEventListener('objectChange', (event) => {
-    console.log(focused_object.name);
-
-    const position_update = new PositionUpdate(
-        focused_object.name,
-        id,
-        focused_object.position.toArray()
-    );
-    websocket.send(JSON.stringify(position_update));
+    switch (current_control_mode) {
+        case ControlMode.Translate:
+            const position_update = new PositionUpdate(
+                focused_object.name,
+                id,
+                focused_object.position.toArray()
+            );
+            websocket.send(JSON.stringify(position_update));
+            break;
+        case ControlMode.Rotate:
+            const rotation_update = new RotationUpdate(
+                focused_object.name,
+                id,
+                focused_object.quaternion.toArray() as quat
+            );
+            websocket.send(JSON.stringify(rotation_update));
+            break;
+    }
 });
 
 const websocket = new WebSocket('ws://192.168.0.178:44433');
@@ -62,6 +87,16 @@ websocket.onmessage = (message) => {
                     position_update.translation[0],
                     position_update.translation[1],
                     position_update.translation[2]
+                );
+        } else if (update.update_type == 'Rotation') {
+            const rotation_update = update as RotationUpdate;
+            objects
+                .get(update.object_id)
+                .quaternion.set(
+                    rotation_update.rotation[0],
+                    rotation_update.rotation[1],
+                    rotation_update.rotation[2],
+                    rotation_update.rotation[3]
                 );
         }
 
@@ -105,6 +140,12 @@ control_scene.setOnAddObjectCallback((object: Object) => {
         object.translation[1],
         object.translation[2]
     );
+    new_scene_object.quaternion.set(
+        object.rotation[0],
+        object.rotation[1],
+        object.rotation[2],
+        object.rotation[3]
+    );
 });
 
 control_scene.setOnHandleObjectUpdateCallback((object_update: ObjectUpdate) => {
@@ -114,6 +155,12 @@ control_scene.setOnHandleObjectUpdateCallback((object_update: ObjectUpdate) => {
         object_update.object.translation[0],
         object_update.object.translation[1],
         object_update.object.translation[2]
+    );
+    new_scene_object.quaternion.set(
+        object_update.object.rotation[0],
+        object_update.object.rotation[1],
+        object_update.object.rotation[2],
+        object_update.object.rotation[3]
     );
 });
 
@@ -125,6 +172,15 @@ document.addEventListener(
         if (code == 'KeyA') {
             const object = new Object('Cube' + Date.now().toString());
             control_scene.addObject(object);
+        } else if (code == 'KeyR') {
+            current_control_mode = ControlMode.Rotate;
+            set_transform_control_mode(current_control_mode);
+        } else if (code == 'KeyT') {
+            current_control_mode = ControlMode.Translate;
+            set_transform_control_mode(current_control_mode);
+        } else if (code == 'KeyS') {
+            current_control_mode = ControlMode.Scale;
+            set_transform_control_mode(current_control_mode);
         }
     },
     false
@@ -153,9 +209,6 @@ function onDocumentMouseDown(event) {
         for (const intersect in intersects) {
             const object = intersects[intersect].object as Mesh;
             if (focused_object.name != object.name) {
-                console.log(focused_object);
-                console.log(object);
-
                 focused_object = object;
                 transform_controls.attach(focused_object);
             }
