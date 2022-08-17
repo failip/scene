@@ -17,6 +17,11 @@ export class RotationUpdate implements RoomUpdate {
     constructor(public object_id: string, public update_from: string, public rotation: quat) {}
 }
 
+export class ScaleUpdate implements RoomUpdate {
+    public update_type = 'Scale';
+    constructor(public object_id: string, public update_from: string, public scale: vec3) {}
+}
+
 export class ObjectUpdate implements RoomUpdate {
     public update_type = 'Object';
     constructor(public object_id: string, public update_from: string, public object: Object) {}

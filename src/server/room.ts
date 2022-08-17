@@ -1,7 +1,7 @@
 import { Client } from './client';
 import { Object } from './object';
 import { Scene } from './scene';
-import { ObjectUpdate, PositionUpdate, RoomUpdate, RotationUpdate } from './updates';
+import { ObjectUpdate, PositionUpdate, RoomUpdate, RotationUpdate, ScaleUpdate } from './updates';
 
 export class Room {
     clients: Map<string, Client>;
@@ -18,6 +18,9 @@ export class Room {
         });
         this.scene.setOnHandleRoationUpdateCallback((rotation_update: RotationUpdate) => {
             this.relayUpdate(rotation_update);
+        });
+        this.scene.setOnHandlScaleUpdateCallback((scale_update: ScaleUpdate) => {
+            this.relayUpdate(scale_update);
         });
     }
 
@@ -40,6 +43,8 @@ export class Room {
             this.scene.handlePositionUpdate(update as PositionUpdate);
         } else if (update.update_type == 'Rotation') {
             this.scene.handleRotationUpdate(update as RotationUpdate);
+        } else if (update.update_type == 'Scale') {
+            this.scene.handleScaleUpdate(update as ScaleUpdate);
         } else if (update.update_type == 'Object') {
             this.scene.handleObjectUpdate(update as ObjectUpdate);
         }

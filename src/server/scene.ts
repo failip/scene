@@ -1,5 +1,5 @@
 import { Object } from './object';
-import { ObjectUpdate, PositionUpdate, RotationUpdate } from './updates';
+import { ObjectUpdate, PositionUpdate, RotationUpdate, ScaleUpdate } from './updates';
 
 export class Scene {
     objects: Map<string, Object>;
@@ -9,6 +9,7 @@ export class Scene {
     private onHandleObjectUpdateCallback: (object_update: ObjectUpdate) => void;
     private onHandlePositionUpdateCallback: (position_update: PositionUpdate) => void;
     private onHandleRotationUpdateCallback: (roation_update: RotationUpdate) => void;
+    private onHandleScaleUpdateCallback: (scale_update: ScaleUpdate) => void;
 
     constructor() {
         this.objects = new Map();
@@ -65,6 +66,15 @@ export class Scene {
         }
     }
 
+    handleScaleUpdate(scale_update: ScaleUpdate) {
+        if (this.isObjectInScene(scale_update.object_id)) {
+            this.objects.get(scale_update.object_id).scale = scale_update.scale;
+            if (this.onHandleScaleUpdateCallback) {
+                this.onHandleScaleUpdateCallback(scale_update);
+            }
+        }
+    }
+
     setOnHandleObjectUpdateCallback(callback: (object_update: ObjectUpdate) => void): void {
         this.onHandleObjectUpdateCallback = callback;
     }
@@ -83,5 +93,9 @@ export class Scene {
 
     setOnHandleRoationUpdateCallback(callback: (rotation_update: RotationUpdate) => void): void {
         this.onHandleRotationUpdateCallback = callback;
+    }
+
+    setOnHandlScaleUpdateCallback(callback: (scale_update: ScaleUpdate) => void): void {
+        this.onHandleScaleUpdateCallback = callback;
     }
 }

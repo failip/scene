@@ -11,7 +11,13 @@ import {
     Vector2
 } from 'three';
 import { TransformControls } from '../../node_modules/three/examples/jsm/controls/TransformControls.js';
-import { ObjectUpdate, PositionUpdate, RoomUpdate, RotationUpdate } from '../server/updates.js';
+import {
+    ObjectUpdate,
+    PositionUpdate,
+    RoomUpdate,
+    RotationUpdate,
+    ScaleUpdate
+} from '../server/updates.js';
 import { Object } from '../server/object';
 import * as ControlScene from '../server/scene.js';
 import { quat, vec3 } from 'gl-matrix';
@@ -69,6 +75,14 @@ transform_controls.addEventListener('objectChange', (event) => {
             );
             websocket.send(JSON.stringify(rotation_update));
             break;
+        case ControlMode.Scale:
+            const scale_update = new ScaleUpdate(
+                focused_object.name,
+                id,
+                focused_object.scale.toArray()
+            );
+            websocket.send(JSON.stringify(scale_update));
+            break;
     }
 });
 
@@ -97,6 +111,15 @@ websocket.onmessage = (message) => {
                     rotation_update.rotation[1],
                     rotation_update.rotation[2],
                     rotation_update.rotation[3]
+                );
+        } else if (update.update_type == 'Scale') {
+            const rotation_update = update as ScaleUpdate;
+            objects
+                .get(update.object_id)
+                .scale.set(
+                    rotation_update.scale[0],
+                    rotation_update.scale[1],
+                    rotation_update.scale[2]
                 );
         }
 
@@ -135,17 +158,6 @@ control_scene.setOnAddObjectCallback((object: Object) => {
     websocket.send(JSON.stringify(update));
     const new_scene_object = addNewObject(object);
     objects.set(object.id, new_scene_object);
-    new_scene_object.position.set(
-        object.translation[0],
-        object.translation[1],
-        object.translation[2]
-    );
-    new_scene_object.quaternion.set(
-        object.rotation[0],
-        object.rotation[1],
-        object.rotation[2],
-        object.rotation[3]
-    );
 });
 
 control_scene.setOnHandleObjectUpdateCallback((object_update: ObjectUpdate) => {
@@ -161,6 +173,11 @@ control_scene.setOnHandleObjectUpdateCallback((object_update: ObjectUpdate) => {
         object_update.object.rotation[1],
         object_update.object.rotation[2],
         object_update.object.rotation[3]
+    );
+    new_scene_object.scale.set(
+        object_update.object.scale[0],
+        object_update.object.scale[1],
+        object_update.object.scale[2]
     );
 });
 
